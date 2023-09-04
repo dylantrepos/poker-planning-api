@@ -1,5 +1,6 @@
 import { Socket } from "socket.io";
-import { addUserToGameRoom, sendMessageToGameRoom, logoutFromGameRoom } from "./functions";
+import { addUserToGameRoom, logoutFromGameRoom } from "./connexion";
+import { sendMessageToGameRoom } from "./user";
 
 export default ( socket: Socket ): void => {
     socket.on('join game', (data) => addUserToGameRoom(data, socket));

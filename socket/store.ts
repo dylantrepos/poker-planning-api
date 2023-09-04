@@ -1,6 +1,0 @@
-new class GameSocket {
-
-    constructor() {
-        
-    }
-}
