@@ -4,34 +4,14 @@ const PORT = 3000;
 const app = express(); 
 const http = require('http');
 const cors = require('cors');
+const socketElt = require('./socket/routes');
 
 app.use(cors());
 
 const server = http.createServer(app);
-const io = require('socket.io')(server, {
-    cors: {
-      origin: '*',
-    }
-  });
+const io = require('socket.io')(server, { cors: { origin: '*' }});
 
-const sockets = [];
-
-io.on('connection', ( socket ) => {
-
-    sockets.push(socket);
-    console.log('A user connected');
-
-    socket.on('chat message', (msg) => {
-        console.log('Message : ', msg);
-        sockets.forEach(socket => {
-            socket.emit('chat message', msg)
-        })
-    })
-
-    socket.on('disconnect', () => {
-        console.log('A user disconected');
-    })
-})
+io.on('connection', ( socket ) => socketElt(socket))
 
 // Routes
 app.get('/', (req, res) => res.send({ message: 'Hello World!' }));
