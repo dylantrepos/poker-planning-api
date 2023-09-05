@@ -1,13 +1,16 @@
 import { Socket } from "socket.io";
 
 type UserSocketType = {
-    id: string;
-    socket: Socket
+    socketId: string;
+    userId: string;
+    status: 'lead' | 'user';
+    username: string;
+    socket: Socket;
 }
 
 export type UserMessageType = {
     gameId: string;
-    name: string;
+    username: string;
     message: string;
 }
 
