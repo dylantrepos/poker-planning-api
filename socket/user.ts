@@ -3,20 +3,20 @@ import { mySocket } from "../server";
 
 // Send a message to user
 export const sendMessageToGameRoom = (userMessage: UserMessageType) => {
-    mySocket[userMessage.gameId].forEach(socketElt => {
+    mySocket[userMessage.roomId].forEach(socketElt => {
         console.log('socket : ', socketElt);
-        socketElt.socket.emit(userMessage.gameId, {
+        socketElt.socket.emit(userMessage.roomId, {
             username: userMessage.username,
             message: userMessage.message
         })
     })
 }
 
-export const updateUserList = ( gameId: string ) => {
-    const userList = mySocket[gameId].map(socketElt => socketElt.username ?? 'null');
+export const updateUserList = ( roomId: string ) => {
+    const userList = mySocket[roomId].map(socketElt => socketElt.username ?? 'null');
 
-    mySocket[gameId].forEach(socketElt => {
-        socketElt.socket.emit(`${gameId}-userList`, {
+    mySocket[roomId].forEach(socketElt => {
+        socketElt.socket.emit(`${roomId}-userList`, {
             userList
         })
     })

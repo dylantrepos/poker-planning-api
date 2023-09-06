@@ -9,11 +9,11 @@ type UserSocketType = {
 }
 
 export type UserMessageType = {
-    gameId: string;
+    roomId: string;
     username: string;
     message: string;
 }
 
 export type SocketsType = {
-    [gameId: string]: UserSocketType[];
+    [roomId: string]: UserSocketType[];
 };

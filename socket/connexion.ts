@@ -1,53 +1,53 @@
 import { Socket } from "socket.io";
 import { AddUserType } from "../types/UserType";
-import { io, mySocket } from "../server";
+import { getRoomList } from "../utils/utils";
+import { io } from "../server";
 
-const getRoomList = () => {
-    console.log('\n[ROOMS] rooms available : ', io.sockets.adapter.rooms);
+export const createRoom = async (userInfo: AddUserType, socket: Socket) => {
+    socket.join(userInfo.roomId);
+    socket.data.roomId = userInfo.roomId;
+    socket.data.username = userInfo.username;
+    socket.data.userId = userInfo.userId;
+
+    // console.log(`\n[SOCKET] socket user : `, socket);
+    console.log(`\n[CREATE] Room created : {${userInfo.roomId}}`);
+    console.log(`\n[JOIN] User {${userInfo.username}} join room : {${userInfo.roomId}}`);
+
+    const users = await getUsersInRoom(userInfo.roomId);
+    
+    socket.to(userInfo.roomId).emit('update-userList', users);
 }
 
-export const createRoom = (userInfo: AddUserType, socket: Socket) => {
-    socket.join(userInfo.gameId);
-
-    console.log(`\n[CREATE] Room created : {${userInfo.gameId}}`);
-    console.log(`\n[JOIN] User {${userInfo.username}} join room : {${userInfo.gameId}}`);
-}
-
-export const joinRoom = (userInfo: AddUserType, socket: Socket) => {
+export const joinRoom = async (userInfo: AddUserType, socket: Socket) => {
     console.log('joining..', userInfo);
-
+    
     getRoomList();
     
-    socket.join(userInfo.gameId);
+    socket.join(userInfo.roomId);
+    socket.data.roomId = userInfo.roomId;
+    socket.data.username = userInfo.username;
+    socket.data.userId = userInfo.userId;
+    console.log(`\n[JOIN] User ${userInfo.username} join room : ${userInfo.roomId}`);
 
-    // Emit to all with io.room(idroom).emit('new user)
-    console.log(`\n[JOIN] User ${userInfo.username} join room : ${userInfo.gameId}`);
-}
-
-
-
-
-// Add new user to a socket room
-export const addUserToGameRoom = (userInfo: AddUserType, socket: Socket) => {
-    if (mySocket.hasOwnProperty(userInfo.gameId)) {
-        console.log('\n[JOIN] join GAME : ', {userInfo, status: 'user'});
-
-        mySocket[userInfo.gameId].push({
-            socketId: socket.id, 
-            userId: userInfo.userId, 
-            status: 'user', 
-            username: userInfo.username,
-            socket
-        });
-    }
-}
-
-// Remove user from sockets list if disconnected
-export const logoutFromGameRoom = (socketId: string) => {
-    console.log(`\n[CONNEXION] user ${socketId} disconnected`);
-    getRoomList();
+    const users = await getUsersInRoom(userInfo.roomId);
     
-    for (const key in mySocket) {
-        mySocket[key] = mySocket[key].filter(user => user.socketId !== socketId);
-    }
+    socket.to(userInfo.roomId).emit('update-userList', users);
+}
+
+export const sendMessageToRoom = async (userInfo: AddUserType, socket: Socket) => {
+    console.log(`[MESSAGE] Message send by ${socket.data.username} : `, userInfo);
+
+    socket.to(userInfo.roomId).emit(`${userInfo.roomId}-message`, userInfo);
+}
+
+export const getUsersInRoom = async (roomId: string) => {
+    const roomUsers = (await io.in(roomId).fetchSockets())
+        .map((socket: any) => ({
+                userId: socket.data.userId,
+                username: socket.data.username,
+            }));
+
+    console.log(`\n[ROOMS] User in room ${roomId} : `, roomUsers);
+
+    return roomUsers;
 }
