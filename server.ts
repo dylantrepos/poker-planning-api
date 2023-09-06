@@ -13,20 +13,22 @@ const app = express();
 app.use(cors());
 
 const server = http.createServer(app);
-const io = require('socket.io')(server, { cors: { origin: '*' }});
+export const io = require('socket.io')(server, { cors: { origin: '*' }});
 export const mySocket: SocketsType = {};
 
-io.on('connection', ( socket: Socket ) => socketElt(socket))
+io.on('connection', ( socket: Socket ) => {
+    console.log(`\n[CONNEXION] User '${socket.id}' has connected`);
+
+    socketElt(socket);
+})
 
 // Routes
 app.get('/', (req: Request, res: Response) => res.send({ 
     message: 'Hello World!'
 }));
 
-app.get('/check/:roomId', (req: Request, res: Response) => {
-    res.send({ 
-        exist: mySocket.hasOwnProperty(req.params.roomId)
-    })
-});
+app.get('/check/:roomId', (req: Request, res: Response) => 
+    res.send({exist: io.sockets.adapter.rooms.has(req.params.roomId)}
+));
 
 server.listen(PORT, () => console.log(`Example app listening on port ${PORT}!`));

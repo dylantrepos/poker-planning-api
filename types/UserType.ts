@@ -1,5 +1,5 @@
 export type AddUserType = {
     gameId: string;
-    userId: string;
+    userId?: string;
     username: string;
 }

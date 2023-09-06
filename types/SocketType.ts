@@ -1,9 +1,9 @@
 import { Socket } from "socket.io";
 
 type UserSocketType = {
-    socketId: string;
-    userId: string;
     status: 'lead' | 'user';
+    socketId: string;
+    userId?: string;
     username: string;
     socket: Socket;
 }
@@ -15,7 +15,5 @@ export type UserMessageType = {
 }
 
 export type SocketsType = {
-    [gameId: string]: {
-        usersSocket: UserSocketType[]
-    }
+    [gameId: string]: UserSocketType[];
 };

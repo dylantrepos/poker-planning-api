@@ -1,48 +1,53 @@
 import { Socket } from "socket.io";
 import { AddUserType } from "../types/UserType";
-import { mySocket } from "../server";
+import { io, mySocket } from "../server";
+
+const getRoomList = () => {
+    console.log('\n[ROOMS] rooms available : ', io.sockets.adapter.rooms);
+}
+
+export const createRoom = (userInfo: AddUserType, socket: Socket) => {
+    socket.join(userInfo.gameId);
+
+    console.log(`\n[CREATE] Room created : {${userInfo.gameId}}`);
+    console.log(`\n[JOIN] User {${userInfo.username}} join room : {${userInfo.gameId}}`);
+}
+
+export const joinRoom = (userInfo: AddUserType, socket: Socket) => {
+    console.log('joining..', userInfo);
+
+    getRoomList();
+    
+    socket.join(userInfo.gameId);
+
+    // Emit to all with io.room(idroom).emit('new user)
+    console.log(`\n[JOIN] User ${userInfo.username} join room : ${userInfo.gameId}`);
+}
+
+
+
 
 // Add new user to a socket room
 export const addUserToGameRoom = (userInfo: AddUserType, socket: Socket) => {
     if (mySocket.hasOwnProperty(userInfo.gameId)) {
-        console.log('data : ', userInfo);
-        mySocket[userInfo.gameId].usersSocket.push({
+        console.log('\n[JOIN] join GAME : ', {userInfo, status: 'user'});
+
+        mySocket[userInfo.gameId].push({
             socketId: socket.id, 
             userId: userInfo.userId, 
             status: 'user', 
             username: userInfo.username,
             socket
         });
-    } else {
-        mySocket[userInfo.gameId] = {
-            usersSocket: [{
-                socketId: socket.id,
-                userId: userInfo.userId,
-                status: 'lead',
-                username: userInfo.username,
-                socket
-            }]
-        };
     }
-}
-
-export const createGameRoom = (userInfo: AddUserType, socket: Socket) => {
-    mySocket[userInfo.gameId] = {
-        usersSocket: [{
-            socketId: socket.id,
-            userId: userInfo.userId,
-            status: 'lead',
-            username: userInfo.username,
-            socket
-        }]
-    };
-
-    console.log('new GAME : ', {userInfo, status: 'lead'});
 }
 
 // Remove user from sockets list if disconnected
 export const logoutFromGameRoom = (socketId: string) => {
+    console.log(`\n[CONNEXION] user ${socketId} disconnected`);
+    getRoomList();
+    
     for (const key in mySocket) {
-        mySocket[key].usersSocket = mySocket[key].usersSocket.filter(user => user.socketId !== socketId);
+        mySocket[key] = mySocket[key].filter(user => user.socketId !== socketId);
     }
 }
