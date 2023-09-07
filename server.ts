@@ -7,7 +7,7 @@ import http from 'http';
 import cors from 'cors';
 import socketController from './socket/controller';
 import { getRoomList } from "./utils/utils";
-import { getUsersInRoom } from "./socket/connexion";
+import { getConvRoom, getUsersInRoom } from "./socket/connexion";
 
 const PORT = 3000;
 const app = express(); 
@@ -37,9 +37,10 @@ app.get('/', (req: Request, res: Response) => res.send({
     message: 'Hello World!'
 }));
 
-app.get('/check/:roomId', (req: Request, res: Response) => 
-    res.send({exist: io.sockets.adapter.rooms.has(req.params.roomId)}
-));
+app.get('/check/:roomId', (req: Request, res: Response) => {
+    console.log('[ROOMS] Rooms availables : ', io.sockets.adapter.rooms);
+    res.send({exist: io.sockets.adapter.rooms.has(req.params.roomId)});
+});
 
 app.get('/user-list/:roomId', async (req: Request, res: Response) => 
     res.send({
@@ -48,6 +49,12 @@ app.get('/user-list/:roomId', async (req: Request, res: Response) =>
                 userId: socket.data.userId,
                 username: socket.data.username,
             }))
+        }
+));
+
+app.get('/conv/:roomId', async (req: Request, res: Response) => 
+    res.send({
+        conv: await getConvRoom(req.params.roomId)
         }
 ));
 
