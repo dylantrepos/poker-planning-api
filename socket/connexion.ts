@@ -1,5 +1,5 @@
 import { Socket } from "socket.io";
-import { MessageList, Room, User } from "../types/UserType";
+import { MessageList, Room, User } from '../types/UserType';
 import { getRoomList } from "../utils/utils";
 import { io } from "../server";
 import { client } from "../redis/redis";
@@ -9,15 +9,25 @@ import { client } from "../redis/redis";
  */
 export const joinRoom = async (userInfo: User, socket: Socket): Promise<void> => {
     getRoomList();
+
     
     socket.join(userInfo.roomId);
+    
+    
     socket.data.roomId = userInfo.roomId;
     socket.data.username = userInfo.username;
     socket.data.userId = userInfo.userId;
-
+    socket.data.role = 'user';
+    
+    
+    
     console.log(`\n[JOIN] User ${userInfo.username} join room : ${userInfo.roomId}`);
-
+    
     const userList = await getUsersInRoom(userInfo.roomId);
+    const leadExists = userList.find((user: User) => user.role === 'lead');
+    socket.data.role = !leadExists || userList.length === 1 ? 'lead' :'user';
+
+    console.log('user list )))))) : ', userList);
 
     const emitData: Room = {
       roomId: userInfo.roomId,
@@ -58,6 +68,7 @@ export const getUsersInRoom = async (roomId: string): Promise<User[]> => {
                 userId: socket.data.userId,
                 roomId: socket.data.roomId,
                 username: socket.data.username,
+                role: socket.data.role
             }));
     
     console.log(`\n[ROOMS] User in room ${roomId} : `, roomUsers);

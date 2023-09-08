@@ -25,7 +25,16 @@ io.on('connection', ( socket: Socket ) => {
   socket.on('disconnect', async () => {
     console.log(`\n[CONNEXION] user ${socket.id} disconnected`);
 
-    const userList = await getUsersInRoom(socket.data.roomId);
+    let userList = await getUsersInRoom(socket.data.roomId);
+    
+    if (socket.data.role === 'lead') {
+      const roomUsers = (await io.in(socket.data.roomId).fetchSockets())
+
+      if (roomUsers.length > 0) {
+        roomUsers[0].data.role = 'lead';
+      }
+    }
+    userList = await getUsersInRoom(socket.data.roomId);
 
     socket.to(socket.data.roomId).emit('update-userList', {
       roomId: socket.data.roomId,
@@ -50,6 +59,7 @@ app.get('/user-list/:roomId', async (req: Request, res: Response) =>
             .map((socket: any) => ({
                 userId: socket.data.userId,
                 username: socket.data.username,
+                role: socket.data.role,
             }))
         }
 ));
