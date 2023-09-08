@@ -6,8 +6,7 @@ import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import socketController from './socket/controller';
-import { getRoomList } from "./utils/utils";
-import { getConvRoom, getUsersInRoom } from "./socket/connexion";
+import { getMessages, getUsersInRoom } from "./socket/connexion";
 
 const PORT = 3000;
 const app = express(); 
@@ -55,9 +54,9 @@ app.get('/user-list/:roomId', async (req: Request, res: Response) =>
         }
 ));
 
-app.get('/conv/:roomId', async (req: Request, res: Response) => 
+app.get('/messages/:roomId', async (req: Request, res: Response) => 
     res.send({
-        conv: await getConvRoom(req.params.roomId)
+        messages: await getMessages(req.params.roomId)
         }
 ));
 

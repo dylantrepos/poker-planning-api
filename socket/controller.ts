@@ -5,5 +5,5 @@ import { updateUserList } from "./user";
 export default ( socket: Socket ): void => {
     socket.on('join-room', (data) => joinRoom(data, socket));
 
-    socket.on('chat-message', (data) => sendMessageToRoom(data, socket));
+    socket.on('new-message', (data) => sendMessageToRoom(data, socket));
 }

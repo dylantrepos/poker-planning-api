@@ -1,5 +1,5 @@
 import { Socket } from "socket.io";
-import { AddUserType } from "../types/UserType";
+import { MessageList, Room, User } from "../types/UserType";
 import { getRoomList } from "../utils/utils";
 import { io } from "../server";
 import { client } from "../redis/redis";
@@ -7,7 +7,7 @@ import { client } from "../redis/redis";
 /**
  * JOIN ROOM
  */
-export const joinRoom = async (userInfo: AddUserType, socket: Socket) => {
+export const joinRoom = async (userInfo: User, socket: Socket): Promise<void> => {
     getRoomList();
     
     socket.join(userInfo.roomId);
@@ -19,7 +19,7 @@ export const joinRoom = async (userInfo: AddUserType, socket: Socket) => {
 
     const userList = await getUsersInRoom(userInfo.roomId);
 
-    const emitData = {
+    const emitData: Room = {
       roomId: userInfo.roomId,
       userList
     };
@@ -31,16 +31,16 @@ export const joinRoom = async (userInfo: AddUserType, socket: Socket) => {
 /**
  * SEND MESSAGE TO ROOM
  */
-export const sendMessageToRoom = async (userInfo: AddUserType, socket: Socket) => {
+export const sendMessageToRoom = async (userInfo: User, socket: Socket): Promise<void> => {
     console.log(`[MESSAGE] Message send by ${socket.data.username} : `, userInfo);
 
-    const title = `${userInfo.roomId}:conv`;
+    const title = `${userInfo.roomId}:messages`;
     const pos = (await client.sMembers(title)).length;
     const content = JSON.stringify({...userInfo, order: pos});
     
     client.sAdd(title, content)
 
-    const emitData = {
+    const emitData: MessageList = {
       ...userInfo, 
       order: pos
     }
@@ -52,7 +52,7 @@ export const sendMessageToRoom = async (userInfo: AddUserType, socket: Socket) =
 /**
  * GET USER IN ROOM
  */
-export const getUsersInRoom = async (roomId: string) => {
+export const getUsersInRoom = async (roomId: string): Promise<User[]> => {
     const roomUsers = (await io.in(roomId).fetchSockets())
         .map((socket: any) => ({
                 userId: socket.data.userId,
@@ -63,7 +63,7 @@ export const getUsersInRoom = async (roomId: string) => {
     console.log(`\n[ROOMS] User in room ${roomId} : `, roomUsers);
     
     if (roomUsers.length === 0) {
-        const title = `${roomId}:conv`;
+        const title = `${roomId}:messages`;
         client.del(title);
 
         console.log(`\n[ROOMS] Room ${roomId} is closed now : `, roomUsers);
@@ -75,9 +75,9 @@ export const getUsersInRoom = async (roomId: string) => {
 
 
 /**
- * GET CONVERSATION IN ROOM
+ * GET MESSAGES IN ROOM
  */
-export const getConvRoom = async (roomId: string) => {
-    const convRoom = (await client.sMembers(`${roomId}:conv`));
-    return  convRoom;
+export const getMessages = async (roomId: string): Promise<string[]> => {
+    const messages = (await client.sMembers(`${roomId}:messages`));
+    return messages;
 }
