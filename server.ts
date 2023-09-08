@@ -19,17 +19,20 @@ export const io = require('socket.io')(server, { cors: { origin: '*' }});
 export const mySocket: SocketsType = {};
 
 io.on('connection', ( socket: Socket ) => {
-    console.log(`\n[CONNEXION] User '${socket.id}' has connected`);
+  console.log(`\n[CONNEXION] User '${socket.id}' has connected`);
 
-    socketController(socket);
+  socketController(socket);
 
-    socket.on('disconnect', async () => {
-        console.log(`\n[CONNEXION] user ${socket.id} disconnected`);
+  socket.on('disconnect', async () => {
+    console.log(`\n[CONNEXION] user ${socket.id} disconnected`);
 
-        const users = await getUsersInRoom(socket.data.roomId);
-    
-        socket.to(socket.data.roomId).emit('update-userList', users);
-    })
+    const userList = await getUsersInRoom(socket.data.roomId);
+
+    socket.to(socket.data.roomId).emit('update-userList', {
+      roomId: socket.data.roomId,
+      userList
+    });
+  })
 })
 
 // Routes

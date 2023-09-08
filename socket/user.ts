@@ -17,6 +17,7 @@ export const updateUserList = ( roomId: string ) => {
 
     mySocket[roomId].forEach(socketElt => {
         socketElt.socket.emit(`${roomId}-userList`, {
+            roomId,
             userList
         })
     })
