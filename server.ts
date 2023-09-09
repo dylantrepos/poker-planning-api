@@ -30,7 +30,7 @@ io.on('connection', ( socket: Socket ) => {
     if (socket.data.role === 'lead') {
       const roomUsers = (await io.in(socket.data.roomId).fetchSockets())
 
-      if (roomUsers.length > 0) {
+      if (roomUsers.length > 0 && !roomUsers.find((user: any) => user.data.userId === socket.data.userId)) {
         roomUsers[0].data.role = 'lead';
       }
     }

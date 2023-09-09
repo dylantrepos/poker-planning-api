@@ -23,9 +23,10 @@ export const joinRoom = async (userInfo: User, socket: Socket): Promise<void> =>
     
     console.log(`\n[JOIN] User ${userInfo.username} join room : ${userInfo.roomId}`);
     
-    const userList = await getUsersInRoom(userInfo.roomId);
+    let userList = await getUsersInRoom(userInfo.roomId);
     const leadExists = userList.find((user: User) => user.role === 'lead');
-    socket.data.role = !leadExists || userList.length === 1 ? 'lead' :'user';
+    socket.data.role = !leadExists || userList.length === 1 || (leadExists && leadExists.userId === userInfo.userId) ? 'lead' :'user';
+    userList = await getUsersInRoom(userInfo.roomId);
 
     console.log('user list )))))) : ', userList);
 
