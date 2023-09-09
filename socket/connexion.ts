@@ -69,7 +69,8 @@ export const getUsersInRoom = async (roomId: string): Promise<User[]> => {
                 userId: socket.data.userId,
                 roomId: socket.data.roomId,
                 username: socket.data.username,
-                role: socket.data.role
+                role: socket.data.role,
+                vote: socket.data.vote ?? '',
             }));
     
     console.log(`\n[ROOMS] User in room ${roomId} : `, roomUsers);
@@ -92,4 +93,23 @@ export const getUsersInRoom = async (roomId: string): Promise<User[]> => {
 export const getMessages = async (roomId: string): Promise<string[]> => {
     const messages = (await client.sMembers(`${roomId}:messages`));
     return messages;
+}
+
+export const updateVote = async (vote: string, socket: Socket) => {
+  const allSockets = await io.in(socket.data.roomId).fetchSockets();
+  allSockets.forEach((socketEl: Socket) => {
+    if (socketEl.data.userId === socket.data.userId) {
+      socketEl.data.vote = vote;
+    }
+  })
+  console.log(`[VOTE] New vote received from : ${socket.data.username}. Vote : ${vote}`);
+  console.log(`[VOTE] New socket : `, allSockets);
+
+  const userList = await getUsersInRoom(socket.data.roomId);
+  const emitData: Room = {
+    roomId: socket.data.roomId,
+    userList
+  };
+  console.log('emit data : ', emitData);
+  io.to(socket.data.roomId).emit('vote', emitData);
 }

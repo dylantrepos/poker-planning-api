@@ -60,6 +60,7 @@ app.get('/user-list/:roomId', async (req: Request, res: Response) =>
                 userId: socket.data.userId,
                 username: socket.data.username,
                 role: socket.data.role,
+                vote: socket.data.vote,
             }))
         }
 ));

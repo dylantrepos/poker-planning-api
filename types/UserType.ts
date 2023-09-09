@@ -3,6 +3,7 @@ export type User = {
     userId?: string;
     username: string;
     role: 'user' | 'lead';
+    vote?: string;
 }
 
 export type Room = {
