@@ -7,6 +7,7 @@ import http from 'http';
 import cors from 'cors';
 import socketController from './socket/controller';
 import { getMessages, getUsersInRoom } from "./socket/connexion";
+import { User } from "./types/UserType";
 
 const PORT = 3000;
 const app = express(); 
@@ -29,9 +30,14 @@ io.on('connection', ( socket: Socket ) => {
     
     if (socket.data.role === 'lead') {
       const roomUsers = (await io.in(socket.data.roomId).fetchSockets())
-
+      
       if (roomUsers.length > 0 && !roomUsers.find((user: any) => user.data.userId === socket.data.userId)) {
-        roomUsers[0].data.role = 'lead';
+        const id = roomUsers[0].data.userId;
+        roomUsers
+          .filter((user: Socket) => user.data.userId === id)
+          .forEach((user: Socket) => {
+            user.data.role = 'lead'
+          });
       }
     }
     userList = await getUsersInRoom(socket.data.roomId);
@@ -53,17 +59,22 @@ app.get('/check/:roomId', (req: Request, res: Response) => {
     res.send({exist: io.sockets.adapter.rooms.has(req.params.roomId)});
 });
 
-app.get('/user-list/:roomId', async (req: Request, res: Response) => 
-    res.send({
-        list: (await io.in(req.params.roomId).fetchSockets())
-            .map((socket: any) => ({
-                userId: socket.data.userId,
-                username: socket.data.username,
-                role: socket.data.role,
-                vote: socket.data.vote,
-            }))
-        }
-));
+app.get('/user-list/:roomId', async (req: Request, res: Response) => {
+  const listData = await io.in(req.params.roomId).fetchSockets();
+  const list: any[] = [...new Map((listData)
+    .map((v: any) => [v.data.userId, v]))
+    .values()]
+    .map((socket: any) => ({
+          userId: socket.data.userId,
+          username: socket.data.username,
+          role: socket.data.role,
+          vote: socket.data.vote,
+      }));
+
+  res.send({
+        list
+  });
+});
 
 app.get('/messages/:roomId', async (req: Request, res: Response) => 
     res.send({

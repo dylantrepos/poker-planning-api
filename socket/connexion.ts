@@ -18,6 +18,7 @@ export const joinRoom = async (userInfo: User, socket: Socket): Promise<void> =>
     socket.data.username = userInfo.username;
     socket.data.userId = userInfo.userId;
     socket.data.role = 'user';
+    socket.data.vote = userInfo.vote;
     
     
     
@@ -26,7 +27,10 @@ export const joinRoom = async (userInfo: User, socket: Socket): Promise<void> =>
     let userList = await getUsersInRoom(userInfo.roomId);
     const leadExists = userList.find((user: User) => user.role === 'lead');
     socket.data.role = !leadExists || userList.length === 1 || (leadExists && leadExists.userId === userInfo.userId) ? 'lead' :'user';
-    userList = await getUsersInRoom(userInfo.roomId);
+    userList = await getUsersInRoom(userInfo.roomId)
+    userList = [...new Map((userList)
+    .map((v: User) => [v.userId, v]))
+    .values()];;
 
     console.log('user list )))))) : ', userList);
 
@@ -92,7 +96,12 @@ export const getUsersInRoom = async (roomId: string): Promise<User[]> => {
  */
 export const getMessages = async (roomId: string): Promise<string[]> => {
     const messages = (await client.sMembers(`${roomId}:messages`));
-    return messages;
+    const messagesJSON = messages
+      .map(message => JSON.parse(message))
+      .sort((a, b) => a.order > b.order ? 1 : -1);;
+
+    console.log('MESSAGE : ', messagesJSON);
+    return messagesJSON;
 }
 
 export const updateVote = async (vote: string, socket: Socket) => {
@@ -105,10 +114,29 @@ export const updateVote = async (vote: string, socket: Socket) => {
   console.log(`[VOTE] New vote received from : ${socket.data.username}. Vote : ${vote}`);
   console.log(`[VOTE] New socket : `, allSockets);
 
-  const userList = await getUsersInRoom(socket.data.roomId);
+  const userListData = await getUsersInRoom(socket.data.roomId);
+  const userList: User[] = [...new Map((userListData)
+    .map((v: User) => [v.userId, v]))
+    .values()];
+    
+  // const newUserList: any[] = [];
+    
+  // console.log('emit data : ', userListData);
+
+  // userListData.map((user: any) => {
+  //     const exists = newUserList.findIndex(u => u.userId === user.userId);
+  //     if (exists === -1) {
+  //       newUserList.push(user);
+  //     } else {
+  //       if (user.role === 'lead') {
+  //         newUserList.splice(exists, 1)
+  //       }
+  //     }
+  // })
+
   const emitData: Room = {
     roomId: socket.data.roomId,
-    userList
+    userList: userList
   };
   console.log('emit data : ', emitData);
   io.to(socket.data.roomId).emit('vote', emitData);
