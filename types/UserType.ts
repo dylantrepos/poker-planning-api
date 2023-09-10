@@ -1,6 +1,6 @@
 export type User = {
     roomId: string;
-    userId?: string;
+    userId: string;
     username: string;
     role: 'user' | 'lead';
     vote?: string;

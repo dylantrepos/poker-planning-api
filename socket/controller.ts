@@ -1,11 +1,14 @@
 import { Socket } from "socket.io";
-import { joinRoom, sendMessageToRoom, updateVote } from "./connexion";
-import { updateUserList } from "./user";
+import { createRoom, joinRoom, sendMessageToRoom, updateVote, sendVoteToRoom } from "./connexion";
 
 export default ( socket: Socket ): void => {
-    socket.on('join-room', (data) => joinRoom(data, socket));
+    socket.on('room:create', (data) => createRoom(data));
 
-    socket.on('new-message', (data) => sendMessageToRoom(data, socket));
+    socket.on('room:join', (data) => joinRoom(data));
+    
+    socket.on('message:create', (data) => sendMessageToRoom(data));
 
-    socket.on('update-vote', (data) => updateVote(data, socket));
+    socket.on('vote:create', (data) => sendVoteToRoom(data));
+
+    socket.on('update-vote', (data) => updateVote(data));
 }

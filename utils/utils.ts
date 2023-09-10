@@ -1,5 +1,8 @@
-import { io } from "../server";
+import { getio } from '../socketConnection';
+
+console.log('utils.ts');
 
 export const getRoomList = () => {
-    console.log('\n[ROOMS] rooms available : ', io.sockets.adapter.rooms);
+    const io = getio();
+    // console.log('\n[ROOMS] rooms available : ', io.sockets.adapter.rooms);
 }
