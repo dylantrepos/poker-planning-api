@@ -1,7 +1,7 @@
 import { Socket } from "socket.io";
 import { User } from '../types/UserType';
 import { client } from "../redis/redis";
-import { getAllSockets, getSocket, getio, ioElt as io } from '../socketConnection';
+import { getAllSockets, getSocket, getio, ioElt as io, ioElt } from '../socketConnection';
 
 /**
  * JOIN ROOM
@@ -26,6 +26,7 @@ export const joinRoom = async (socket: Socket, userInfo: User): Promise<void> =>
   if (createTheRoom) {
     await client.set(`${userInfo.roomId}:lead`, userInfo.userId)
     const lead = await client.get(`${userInfo.roomId}:lead`);
+    
     io.to(userInfo.roomId).emit('lead:update', lead);
   }
 
@@ -49,7 +50,7 @@ export const sendMessageToRoom = async (userInfo: User): Promise<void> => {
 
 
 /**
- * SEND MESSAGE TO ROOM
+ * SEND VOTE TO ROOM
  */
 export const sendVoteToRoom = async (userInfo: User): Promise<void> => { 
     // Update vote to users having userInfo.userId
@@ -62,6 +63,24 @@ export const sendVoteToRoom = async (userInfo: User): Promise<void> => {
 
     io.to(userInfo.roomId).emit('vote:received', userInfo);
 }
+
+/**
+ * CLOSE VOTE FOR ROOM
+ */
+export const closeVoteToRoom = async (userInfo: User): Promise<void> => { 
+    io.to(userInfo.roomId).emit('vote:close', true);
+}
+
+/**
+ * OPEN VOTE FOR ROOM
+ */
+export const openVoteToRoom = async (userInfo: User): Promise<void> => { 
+    (await io.in(userInfo.roomId).fetchSockets()).forEach((socket: Socket) => socket.data.vote = '');
+
+    io.to(userInfo.roomId).emit('vote:open', false);
+}
+
+
 
 
 /**
@@ -108,4 +127,14 @@ export const getMessages = async (roomId: string): Promise<string[]> => {
       .sort((a, b) => a.order > b.order ? 1 : -1);;
 
     return messagesJSON;
+}
+
+/**
+ * UPDATE NEW LEAD
+ */
+export const sendNewLead = async (data: any): Promise<void> => {
+  
+  await client.set(`${data.roomId}:lead`, data.leadId)
+
+  ioElt.to(data.roomId).emit('lead:update', data.leadId);
 }
