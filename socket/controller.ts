@@ -1,16 +1,17 @@
-import { Socket } from "socket.io";
 import { closeVoteToRoom, joinRoom, openVoteToRoom, sendMessageToRoom, sendNewLead, sendVoteToRoom } from "./connexion";
 
+import type { Socket } from "../types/SocketType";
+
 export default ( socket: Socket ): void => {
-    socket.on('room:join', (data) => joinRoom(socket, data));
+    socket.on('room:join', (userInfo) => joinRoom(socket, userInfo));
     
-    socket.on('message:create', (data) => sendMessageToRoom(data));
+    socket.on('message:create', (userMessage) => sendMessageToRoom(userMessage));
 
-    socket.on('vote:create', (data) => sendVoteToRoom(data));
+    socket.on('vote:create', (vote) => sendVoteToRoom(vote));
 
-    socket.on('vote:close', (data) => closeVoteToRoom(data));
+    socket.on('vote:close', (voteInfo) => closeVoteToRoom(voteInfo));
 
-    socket.on('vote:open', (data) => openVoteToRoom(data));
+    socket.on('vote:open', (voteInfo) => openVoteToRoom(voteInfo));
 
-    socket.on('lead:update', (data) => sendNewLead(data));
+    socket.on('lead:update', (leadInfo) => sendNewLead(leadInfo));
 }

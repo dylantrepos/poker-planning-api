@@ -1,12 +1,19 @@
 import http from 'http';
-import { Socket } from 'socket.io';
+import { Server } from 'socket.io';
+
 import socketController from './socket/controller';
 import { getUsersInRoom } from './socket/connexion';
 import { client } from './redis/redis';
-import { User } from './types/UserType';
 
-export let ioElt: any;
-let socketElt: any;
+import type { ClientToServerEvents, InterServerEvents, ServerToClientEvents, SocketData, Socket } from './types/SocketType';
+
+export let ioElt: Server<
+  ClientToServerEvents,
+  ServerToClientEvents,
+  InterServerEvents,
+  SocketData
+  >;;
+let socketElt: Socket;
 
 const checkIoExists = (): void => {
   if (!ioElt) {
@@ -16,9 +23,14 @@ const checkIoExists = (): void => {
 
 export const init = (server: http.Server<typeof http.IncomingMessage, typeof http.ServerResponse>) => {
     // start socket.io server and cache io value
-    ioElt = require('socket.io')(server, { cors: { origin: '*' }});
+    ioElt = new Server<
+      ClientToServerEvents,
+      ServerToClientEvents,
+      InterServerEvents,
+      SocketData
+    >(server, { cors: { origin: '*' }});
 
-    ioElt.on('connection', ( socket: Socket ) => {
+    ioElt.on('connection', ( socket ) => {
       socketElt = socket;
       socketController(socket);
       
@@ -38,12 +50,12 @@ export const init = (server: http.Server<typeof http.IncomingMessage, typeof htt
     return ioElt;
 };
 
-const disconnectFromRoom = async (socket: Socket) => {
+const disconnectFromRoom = async ( socket: Socket ) => {
   const roomUsers = (await ioElt.in(socket.data.roomId).fetchSockets())
 
   // If no user in room anymore
   if (roomUsers.length === 0) {
-    client.del(`${socket.data.id}:message`);
+    client.del(`${socket.data.userId}:message`);
     return;
   } 
 
@@ -56,15 +68,14 @@ const disconnectFromRoom = async (socket: Socket) => {
       const id = roomUsers[0].data.userId;
       
       roomUsers
-        .filter((user: Socket) => user.data.userId === id)
-        .forEach((user: Socket) => {
+        .filter((user) => user.data.userId === id)
+        .forEach((user) => {
           user.data.role = 'lead'
         });
 
       await client.set(`${socket.data.roomId}:lead`, id)
-      const lead = await client.get(`${socket.data.roomId}:lead`);
 
-      ioElt.to(socket.data.roomId).emit('lead:update', lead);
+      ioElt.to(socket.data.roomId).emit('lead:update', id);
   }
 
   const userList = await getUsersInRoom(socket.data.roomId);

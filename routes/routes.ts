@@ -1,9 +1,10 @@
-import { Request, Response } from "express";
+import { Express, Request, Response } from "express";
+
 import { getSocket, getio } from '../socketConnection';
-import { Express } from 'express';
 import { client } from "../redis/redis";
-import { User } from "../types/UserType";
 import { getUsersInRoom } from "../socket/connexion";
+
+import type { User, Vote } from "../types/UserType";
 
 
 export const routerApp = (app: Express) => {
@@ -41,7 +42,6 @@ export const routerApp = (app: Express) => {
    * Get all user in room
    */
   app.get('/user-list/:roomId', async (req: Request, res: Response) => {
-    const roomId = getSocket().data.roomId;
     const userList = await getUsersInRoom(req.params.roomId);
 
     res.send({list: userList});
@@ -49,8 +49,7 @@ export const routerApp = (app: Express) => {
   
   
   app.get('/messages/:roomId', async (req: Request, res: Response) => {
-    const roomId = await getSocket().data.roomId;
-    const messages = await client.sMembers(`${roomId}:messages`);
+    const messages = await client.sMembers(`${req.params.roomId}:messages`);
     const messagesJSON = messages
       .map(message => JSON.parse(message))
       .sort((a, b) => a.order > b.order ? 1 : -1);
@@ -60,10 +59,10 @@ export const routerApp = (app: Express) => {
   
   app.get('/votes/:roomId', async (req: Request, res: Response) => {
     let userList = await getUsersInRoom(req.params.roomId);
-    const userListMapped: Record<string, string> = {};
+    const userListMapped: Record<string, Vote> = {};
 
     userList.forEach((user: User) => {
-      userListMapped[user.userId] = user.vote ?? '';
+      userListMapped[user.userId] = user.vote;
     })
 
     res.send(userListMapped);

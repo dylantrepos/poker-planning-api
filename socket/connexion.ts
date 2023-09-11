@@ -1,7 +1,8 @@
-import { Socket } from "socket.io";
-import { User } from '../types/UserType';
 import { client } from "../redis/redis";
-import { getAllSockets, getSocket, getio, ioElt as io, ioElt } from '../socketConnection';
+import { getAllSockets, getio, ioElt as io, ioElt } from '../socketConnection';
+
+import type { Socket } from "../types/SocketType";
+import type { Lead, MessageList, RoomId, User, UserMessage, UserVote, UserVoteOpenClose } from '../types/UserType';
 
 /**
  * JOIN ROOM
@@ -27,7 +28,7 @@ export const joinRoom = async (socket: Socket, userInfo: User): Promise<void> =>
     await client.set(`${userInfo.roomId}:lead`, userInfo.userId)
     const lead = await client.get(`${userInfo.roomId}:lead`);
     
-    io.to(userInfo.roomId).emit('lead:update', lead);
+    io.to(userInfo.roomId).emit('lead:update', userInfo.userId);
   }
 
   userList = await getUsersInRoom(userInfo.roomId);
@@ -38,7 +39,7 @@ export const joinRoom = async (socket: Socket, userInfo: User): Promise<void> =>
 /**
  * SEND MESSAGE TO ROOM
  */
-export const sendMessageToRoom = async (userInfo: User): Promise<void> => { 
+export const sendMessageToRoom = async (userInfo: UserMessage): Promise<void> => { 
     const title = `${userInfo.roomId}:messages`;
     const pos = (await client.sMembers(title)).length;
     const content = JSON.stringify({...userInfo, order: pos});
@@ -52,12 +53,12 @@ export const sendMessageToRoom = async (userInfo: User): Promise<void> => {
 /**
  * SEND VOTE TO ROOM
  */
-export const sendVoteToRoom = async (userInfo: User): Promise<void> => { 
+export const sendVoteToRoom = async (userInfo: UserVote): Promise<void> => { 
     // Update vote to users having userInfo.userId
-    (await getAllSockets())
+    getAllSockets()
       .forEach((socket: Socket) => {
         if(socket.data.userId === userInfo.userId) {
-          socket.data.vote = userInfo.vote
+          socket.data.vote = userInfo.vote;
         }
       })
 
@@ -67,17 +68,17 @@ export const sendVoteToRoom = async (userInfo: User): Promise<void> => {
 /**
  * CLOSE VOTE FOR ROOM
  */
-export const closeVoteToRoom = async (userInfo: User): Promise<void> => { 
-    io.to(userInfo.roomId).emit('vote:close', true);
+export const closeVoteToRoom = async (voteData: UserVoteOpenClose): Promise<void> => { 
+    io.to(voteData.roomId).emit('vote:close', true);
 }
 
 /**
  * OPEN VOTE FOR ROOM
  */
-export const openVoteToRoom = async (userInfo: User): Promise<void> => { 
-    (await io.in(userInfo.roomId).fetchSockets()).forEach((socket: Socket) => socket.data.vote = '');
+export const openVoteToRoom = async (voteData: UserVoteOpenClose): Promise<void> => { 
+    (await io.in(voteData.roomId).fetchSockets()).forEach((socket) => socket.data.vote = '');
 
-    io.to(userInfo.roomId).emit('vote:open', false);
+    io.to(voteData.roomId).emit('vote:open', false);
 }
 
 
@@ -86,21 +87,21 @@ export const openVoteToRoom = async (userInfo: User): Promise<void> => {
 /**
  * GET USER IN ROOM
  */
-export const getUsersInRoom = async (roomId: string): Promise<User[]> => {
+export const getUsersInRoom = async (roomId: RoomId): Promise<User[]> => {
     const io = getio();
 
     const roomUsers = (await io.in(roomId).fetchSockets())
-        .map((socket: any) => ({
+        .map((socket) => ({
                 userId: socket.data.userId,
                 roomId: socket.data.roomId,
                 username: socket.data.username,
                 role: socket.data.role,
-                vote: socket.data.vote ?? '',
+                vote: socket.data.vote,
             }));
 
-    const newUserList: any[] = [];
+    const newUserList: User[] = [];
 
-    roomUsers.map((user: any) => {
+    (roomUsers as User[]).map((user) => {
         const exists = newUserList.findIndex(u => u.userId === user.userId);
         if (exists === -1) {
           newUserList.push(user);
@@ -120,7 +121,7 @@ export const getUsersInRoom = async (roomId: string): Promise<User[]> => {
 /**
  * GET MESSAGES IN ROOM
  */
-export const getMessages = async (roomId: string): Promise<string[]> => {
+export const getMessages = async (roomId: RoomId): Promise<MessageList[]> => {
     const messages = (await client.sMembers(`${roomId}:messages`));
     const messagesJSON = messages
       .map(message => JSON.parse(message))
@@ -132,7 +133,7 @@ export const getMessages = async (roomId: string): Promise<string[]> => {
 /**
  * UPDATE NEW LEAD
  */
-export const sendNewLead = async (data: any): Promise<void> => {
+export const sendNewLead = async (data: Lead): Promise<void> => {
   
   await client.set(`${data.roomId}:lead`, data.leadId)
 
