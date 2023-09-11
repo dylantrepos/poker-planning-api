@@ -5,7 +5,7 @@ import { getUsersInRoom } from './socket/connexion';
 import { client } from './redis/redis';
 import { User } from './types/UserType';
 
-let ioElt: any;
+export let ioElt: any;
 let socketElt: any;
 
 const checkIoExists = (): void => {
@@ -30,41 +30,47 @@ export const init = (server: http.Server<typeof http.IncomingMessage, typeof htt
       socket.on('disconnect', async () => {
         console.log(`\n[CONNEXION] user ${socket.id} disconnected`);
 
-        if (socket.data.roomId) {
-          const roomUsers = (await ioElt.in(socket.data.roomId).fetchSockets());
-          if (roomUsers.length === 0) {
-            await client.del(`${socket.data.roomId}:userList`);
-            await client.del(`${socket.data.roomId}:messages`);
-          } else {
-            let userListRedis = await client.sMembers(`${socket.data.roomId}:userList`);
-            let userList: any[] = userListRedis.map(user => JSON.parse(user));
-            const checkUserStillAlive = roomUsers.find((socketEl: Socket) => 
-              socketEl.data.userId === socket.data.userId
-            )
-            
-            if (!checkUserStillAlive) {
-              userList.forEach(user => {
-                if (user.userId === socket.data.userId) user.connected = false
-              })
-              
-              await client.del(`${socket.data.roomId}:userList`);
-    
-              for (const user of userList) {
-                await client.sAdd(`${socket.data.roomId}:userList`, JSON.stringify(user));
-              }
-    
-              userList = userList.filter(user => user.connected = true);
-    
-              ioElt.to(socket.data.roomId).emit('userList:update', userList);
-          }
-          }
-        }
+        await disconnectFromRoom(socket);
       })
     })
 
 
     return ioElt;
 };
+
+const disconnectFromRoom = async (socket: Socket) => {
+  const roomUsers = (await ioElt.in(socket.data.roomId).fetchSockets())
+
+  // If no user in room anymore
+  if (roomUsers.length === 0) {
+    client.del(`${socket.data.id}:message`);
+    return;
+  } 
+
+
+  // Check if user leaving is lead and is still connected
+  if (
+    socket.data.role === 'lead' && 
+    !roomUsers.find((user: any) => user.data.userId === socket.data.userId)
+  ) {
+      const id = roomUsers[0].data.userId;
+      
+      roomUsers
+        .filter((user: Socket) => user.data.userId === id)
+        .forEach((user: Socket) => {
+          user.data.role = 'lead'
+        });
+
+      await client.set(`${socket.data.roomId}:lead`, id)
+      const lead = await client.get(`${socket.data.roomId}:lead`);
+
+      ioElt.to(socket.data.roomId).emit('lead:update', lead);
+  }
+
+  const userList = await getUsersInRoom(socket.data.roomId);
+
+  ioElt.to(socket.data.roomId).emit('userList:update', userList);
+}
 
 export const getio = () => {
     checkIoExists();
@@ -74,12 +80,11 @@ export const getio = () => {
 
 export const getSocket = () => {
     checkIoExists();
-    
+
     return socketElt;
 }
 
 export const getAllSockets = () => {
     checkIoExists();
-    
-    return ioElt.sockets;
+    return ioElt.sockets.sockets;
 }

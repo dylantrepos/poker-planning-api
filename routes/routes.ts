@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import { getSocket, getio } from '../socketConnection';
 import { Express } from 'express';
-import { getMessages } from "../socket/connexion";
 import { client } from "../redis/redis";
 import { User } from "../types/UserType";
+import { getUsersInRoom } from "../socket/connexion";
 
 
 export const routerApp = (app: Express) => {
@@ -29,11 +29,9 @@ export const routerApp = (app: Express) => {
     let userListRedis = await client.sMembers(`${req.params.roomId}:userList`);
     let userList: User[] = userListRedis.map(user => JSON.parse(user));
 
-    console.log('id received: ', req.params);
-    console.log('user list : ', userListRedis);
-    console.log('user list : ', userList);
-    
-    const userAlreadyExists = userList.find((user: User) => user.userId === req.params.userId);
+    const userAlreadyExists = userList.find((user: User) => 
+      user.userId === req.params.userId
+    );
 
     res.send(JSON.stringify(userAlreadyExists) ?? {userId: ''});
   });
@@ -44,11 +42,9 @@ export const routerApp = (app: Express) => {
    */
   app.get('/user-list/:roomId', async (req: Request, res: Response) => {
     const roomId = getSocket().data.roomId;
+    const userList = await getUsersInRoom(req.params.roomId);
 
-    let userListRedis = await client.sMembers(`${roomId}:userList`);
-    let userList: User[] = userListRedis.map(user => JSON.parse(user));
-
-    res.send(userList);
+    res.send({list: userList});
   });
   
   
@@ -58,17 +54,25 @@ export const routerApp = (app: Express) => {
     const messagesJSON = messages
       .map(message => JSON.parse(message))
       .sort((a, b) => a.order > b.order ? 1 : -1);
-
-    res.send(messagesJSON);
+    res.send(messagesJSON ?? []);
   });
   
   
   app.get('/votes/:roomId', async (req: Request, res: Response) => {
-    const roomId = await getSocket().data.roomId;
-    const votes = await client.sMembers(`${roomId}:vote`);
-    const votesJSON = votes
-      .map(vote => JSON.parse(vote))
+    let userList = await getUsersInRoom(req.params.roomId);
+    const userListMapped: Record<string, string> = {};
 
-    res.send(votesJSON);
+    userList.forEach((user: User) => {
+      userListMapped[user.userId] = user.vote ?? '';
+    })
+
+    res.send(userListMapped);
+  });
+  
+  app.get('/lead/:roomId', async (req: Request, res: Response) => {
+    const roomId = await getSocket().data.roomId;
+    const lead = await client.get(`${roomId}:lead`);
+    
+    res.send({leadId: lead});
   });
 }
