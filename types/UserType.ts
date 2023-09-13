@@ -4,6 +4,7 @@ export type Username = string;
 export type Role = 'user' | 'lead';
 export type Message = string;
 export type Connected = boolean;
+export type VoteState = boolean;
 export type Vote = 
   '' | '0' | '1/2' | '1' | '2' | 
   '3' | '5' | '8' | '13' | 
@@ -12,11 +13,14 @@ export type Vote =
 
 export type User = {
     roomId: RoomId;
-    userId: string;
+    userId: UserId;
     username: Username;
-    role: Role;
     vote: Vote;
+    connected: Connected;
 }
+
+export type UserList = Record<UserId, User>;
+export type VoteList = Record<UserId, Vote>;
 
 export type Lead = {
   roomId: RoomId;

@@ -1,10 +1,10 @@
 import { Express, Request, Response } from "express";
 
-import { getSocket, getio } from '../socketConnection';
-import { client } from "../redis/redis";
-import { getUsersInRoom } from "../socket/connexion";
+import { getio } from '../socketConnection';
+import { client, getMessages, getVoteState, getVotes } from "../redis/redis";
 
 import type { User, Vote } from "../types/UserType";
+import { getUsersInRoom } from "../utils/utils";
 
 
 export const routerApp = (app: Express) => {
@@ -15,16 +15,18 @@ export const routerApp = (app: Express) => {
     message: 'Hello World!'
   }));  
 
+
   /**
-   * Check if room exists
+   * Check if room exists.
    */
   app.get('/check-room/:roomId', (req: Request, res: Response) => {
-    // console.log('[ROOMS] Rooms availables : ', io.sockets.adapter.rooms);
+    console.log('tes : ', io.sockets.adapter.rooms.has(req.params.roomId));
     res.send({exist: io.sockets.adapter.rooms.has(req.params.roomId)});
   });
 
+
   /**
-   * Check if user exists
+   * Check if user exists in room.
    */
   app.get('/check-user/:roomId/:userId', async (req: Request, res: Response) => {
     let userListRedis = await client.sMembers(`${req.params.roomId}:userList`);
@@ -39,7 +41,7 @@ export const routerApp = (app: Express) => {
   
 
   /**
-   * Get all user in room
+   * Get all user from current room.
    */
   app.get('/user-list/:roomId', async (req: Request, res: Response) => {
     const userList = await getUsersInRoom(req.params.roomId);
@@ -48,30 +50,42 @@ export const routerApp = (app: Express) => {
   });
   
   
+  /**
+   * Get all message from current room.
+   */
   app.get('/messages/:roomId', async (req: Request, res: Response) => {
-    const messages = await client.sMembers(`${req.params.roomId}:messages`);
-    const messagesJSON = messages
-      .map(message => JSON.parse(message))
-      .sort((a, b) => a.order > b.order ? 1 : -1);
-    res.send(messagesJSON ?? []);
+    const messages = await getMessages(req.params.roomId);
+
+    res.send(messages);
   });
   
   
+  /**
+   * Get all votes from current room.
+   */
   app.get('/votes/:roomId', async (req: Request, res: Response) => {
-    let userList = await getUsersInRoom(req.params.roomId);
-    const userListMapped: Record<string, Vote> = {};
+    const votes = await getVotes(req.params.roomId);
 
-    userList.forEach((user: User) => {
-      userListMapped[user.userId] = user.vote;
-    })
-
-    res.send(userListMapped);
+    res.send(votes);
   });
   
+
+  /**
+   * Get lead id from current room.
+   */
   app.get('/lead/:roomId', async (req: Request, res: Response) => {
-    const roomId = await getSocket().data.roomId;
-    const lead = await client.get(`${roomId}:lead`);
+    const lead = await client.get(`${req.params.roomId}:lead`);
     
     res.send({leadId: lead});
+  });
+  
+  
+  /**
+   * Get vote state for current room.
+   */
+  app.get('/vote-state/:roomId', async (req: Request, res: Response) => {
+    const state = await getVoteState(req.params.roomId);
+
+    res.send({close: state});
   });
 }

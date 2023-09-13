@@ -1,49 +1,24 @@
-import http from 'http';
+  import http from 'http';
 import { Server } from 'socket.io';
 
-import socketController from './socket/controller';
-import { getUsersInRoom } from './socket/connexion';
+import socketOnEvents from './socket/onEvents';
 import { client } from './redis/redis';
 
-import type { ClientToServerEvents, InterServerEvents, ServerToClientEvents, SocketData, Socket } from './types/SocketType';
+import type { Socket, ServerType } from './types/SocketType';
+import { getUsersInRoom } from './utils/utils';
 
-export let ioElt: Server<
-  ClientToServerEvents,
-  ServerToClientEvents,
-  InterServerEvents,
-  SocketData
-  >;;
-let socketElt: Socket;
-
-const checkIoExists = (): void => {
-  if (!ioElt) {
-    throw new Error("must call .init(server) before you can call .getio()");
-  }
-}
+export let ioElt: ServerType;
 
 export const init = (server: http.Server<typeof http.IncomingMessage, typeof http.ServerResponse>) => {
-    // start socket.io server and cache io value
-    ioElt = new Server<
-      ClientToServerEvents,
-      ServerToClientEvents,
-      InterServerEvents,
-      SocketData
-    >(server, { cors: { origin: '*' }});
+    ioElt = new Server(server, { cors: { origin: '*' }});
 
     ioElt.on('connection', ( socket ) => {
-      socketElt = socket;
-      socketController(socket);
-      
-      // console.log(`\n[CONNEXION] User '${socket.id}' has connected`);
+      socketOnEvents(socket);
 
       /**
        * Disconnnection
        */
-      socket.on('disconnect', async () => {
-        console.log(`\n[CONNEXION] user ${socket.id} disconnected`);
-
-        await disconnectFromRoom(socket);
-      })
+      socket.on('disconnect', async () =>  await disconnectFromRoom(socket));
     })
 
 
@@ -51,49 +26,50 @@ export const init = (server: http.Server<typeof http.IncomingMessage, typeof htt
 };
 
 const disconnectFromRoom = async ( socket: Socket ) => {
-  const roomUsers = (await ioElt.in(socket.data.roomId).fetchSockets())
+  console.log(`\n[CONNEXION] user ${socket.id} disconnected`);
+
+  const { userId, roomId } = socket.data;
+  const roomUsers = await ioElt.in(roomId).fetchSockets();
+  const leadCurr = await client.get(`${roomId}:lead`) ?? userId;
+  const isLead = leadCurr === userId;
 
   // If no user in room anymore
   if (roomUsers.length === 0) {
-    client.del(`${socket.data.userId}:message`);
+    client.del(`${userId}:message`);
+    client.del(`${userId}:lead`);
+    client.del(`${userId}:userList`);
+
     return;
   } 
 
-
   // Check if user leaving is lead and is still connected
   if (
-    socket.data.role === 'lead' && 
-    !roomUsers.find((user: any) => user.data.userId === socket.data.userId)
+    isLead && 
+    !roomUsers.find((user: any) => user.data.userId === userId)
   ) {
-      const id = roomUsers[0].data.userId;
-      
-      roomUsers
-        .filter((user) => user.data.userId === id)
-        .forEach((user) => {
-          user.data.role = 'lead'
-        });
+      const newLeadId = roomUsers[0].data.userId;
 
-      await client.set(`${socket.data.roomId}:lead`, id)
+      await client.set(`${roomId}:lead`, newLeadId)
 
-      ioElt.to(socket.data.roomId).emit('lead:update', id);
+      ioElt.to(roomId).emit('lead:update', newLeadId);
   }
 
-  const userList = await getUsersInRoom(socket.data.roomId);
+  const userList = await getUsersInRoom(roomId);
 
-  ioElt.to(socket.data.roomId).emit('userList:update', userList);
+  ioElt.to(roomId).emit('userList:update', userList);
 }
 
+const checkIoExists = (): void => {
+  if (!ioElt) {
+    throw new Error("must call .init(server) before you can call .getio()");
+  }
+}
 export const getio = () => {
     checkIoExists();
     
     return ioElt;
 }
 
-export const getSocket = () => {
-    checkIoExists();
-
-    return socketElt;
-}
 
 export const getAllSockets = () => {
     checkIoExists();
