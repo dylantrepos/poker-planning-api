@@ -1,10 +1,9 @@
 import { Express, Request, Response } from "express";
 
 import { getio } from '../socketConnection';
-import { client, getMessages, getVoteState, getVotes } from "../redis/redis";
+import { client, getMessages, getUserList, getVoteState, getVotes } from "../redis/redis";
 
-import type { User, Vote } from "../types/UserType";
-import { getUsersInRoom } from "../utils/utils";
+import type { User } from "../types/UserType";
 
 
 export const routerApp = (app: Express) => {
@@ -20,7 +19,6 @@ export const routerApp = (app: Express) => {
    * Check if room exists.
    */
   app.get('/check-room/:roomId', (req: Request, res: Response) => {
-    console.log('tes : ', io.sockets.adapter.rooms.has(req.params.roomId));
     res.send({exist: io.sockets.adapter.rooms.has(req.params.roomId)});
   });
 
@@ -44,7 +42,7 @@ export const routerApp = (app: Express) => {
    * Get all user from current room.
    */
   app.get('/user-list/:roomId', async (req: Request, res: Response) => {
-    const userList = await getUsersInRoom(req.params.roomId);
+    const userList = await getUserList(req.params.roomId);
 
     res.send({list: userList});
   });

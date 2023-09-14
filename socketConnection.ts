@@ -2,7 +2,7 @@
 import { Server } from 'socket.io';
 
 import socketOnEvents from './socket/onEvents';
-import { client } from './redis/redis';
+import { client, getUserList, removeUserFromList } from './redis/redis';
 
 import type { Socket, ServerType } from './types/SocketType';
 import { getUsersInRoom } from './utils/utils';
@@ -30,31 +30,19 @@ const disconnectFromRoom = async ( socket: Socket ) => {
 
   const { userId, roomId } = socket.data;
   const roomUsers = await ioElt.in(roomId).fetchSockets();
-  const leadCurr = await client.get(`${roomId}:lead`) ?? userId;
-  const isLead = leadCurr === userId;
 
   // If no user in room anymore
   if (roomUsers.length === 0) {
-    client.del(`${userId}:message`);
-    client.del(`${userId}:lead`);
-    client.del(`${userId}:userList`);
+    client.del(`${roomId}:messages`);
+    client.del(`${roomId}:lead`);
+    client.del(`${roomId}:userList`);
+    client.del(`${roomId}:votes`);
 
     return;
   } 
 
-  // Check if user leaving is lead and is still connected
-  if (
-    isLead && 
-    !roomUsers.find((user: any) => user.data.userId === userId)
-  ) {
-      const newLeadId = roomUsers[0].data.userId;
-
-      await client.set(`${roomId}:lead`, newLeadId)
-
-      ioElt.to(roomId).emit('lead:update', newLeadId);
-  }
-
-  const userList = await getUsersInRoom(roomId);
+  await removeUserFromList(roomId, userId);
+  const userList = await getUserList(roomId);
 
   ioElt.to(roomId).emit('userList:update', userList);
 }

@@ -15,7 +15,6 @@ export type User = {
     roomId: RoomId;
     userId: UserId;
     username: Username;
-    vote: Vote;
     connected: Connected;
 }
 

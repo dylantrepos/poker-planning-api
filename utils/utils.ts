@@ -15,18 +15,6 @@ export const updateUserVote = (userId: UserId, vote: Vote): void => {
 }
 
 /**
- * Send list of messages from `roomId`.
- */
-export const getMessages = async (roomId: RoomId): Promise<Message[]> => {
-  const messages = (await client.sMembers(`${roomId}:messages`));
-  const messagesJSON = messages
-    .map(message => JSON.parse(message))
-    .sort((a, b) => a.order > b.order ? 1 : -1);;
-
-  return messagesJSON;
-}
-
-/**
  * GET USER IN ROOM
  */
 export const getUsersInRoom = async (roomId: RoomId): Promise<UserList> => {
@@ -37,7 +25,6 @@ export const getUsersInRoom = async (roomId: RoomId): Promise<UserList> => {
               userId: socket.data.userId,
               roomId: socket.data.roomId,
               username: socket.data.username,
-              vote: socket.data.vote,
               connected: socket.data.connected,
           }));
 
@@ -52,7 +39,6 @@ export const getUsersInRoom = async (roomId: RoomId): Promise<UserList> => {
           userId: user.userId,
           roomId: user.roomId,
           username: user.username,
-          vote: user.vote,
           connected: user.connected,
       }
       } else {
@@ -61,7 +47,6 @@ export const getUsersInRoom = async (roomId: RoomId): Promise<UserList> => {
               userId: user.userId,
               roomId: user.roomId,
               username: user.username,
-              vote: user.vote,
               connected: user.connected,
           }
         }

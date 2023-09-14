@@ -1,5 +1,6 @@
 import { createClient } from 'redis';
-import { Message, MessageList, RoomId, UserId, Vote, VoteState, UserMessage } from '../types/UserType';
+import { MessageList, RoomId, UserId, Vote, VoteState, UserMessage, User, UserList } from '../types/UserType';
+import { ioElt } from '../socketConnection';
 
 export const client = createClient();
 
@@ -14,7 +15,52 @@ client.on('connect', async () => {
 
 
 /**
- * Votes Users
+ * Users
+ */
+export const getUserList = async (roomId: RoomId): Promise<UserList> => {
+  const userList = await client.get(`${roomId}:userList`);
+  const userListJson = JSON.parse(userList ?? '{}');
+  
+  return userListJson;
+}
+
+export const addUserToList = async (roomId: RoomId, user: User): Promise<void> => {
+  const currentUserList = await getUserList(roomId);
+  
+  currentUserList[user.userId] = {
+    userId: user.userId,
+    roomId: user.roomId,
+    username: user.username,
+    connected: true,
+  };
+
+  await client.set(`${roomId}:userList`, JSON.stringify(currentUserList));
+  ioElt.to(roomId).emit('userList:update', currentUserList);
+}
+
+export const removeUserFromList = async (roomId: RoomId, userId: UserId): Promise<void> => {
+  const userListSockets = await ioElt.in(roomId).fetchSockets();
+  const currentUserList = await getUserList(roomId);
+  const currentLead = await getLeadId(roomId);
+  const isNotLive = !userListSockets.find((user) => user.data.userId === userId);
+
+  if (isNotLive) {
+    if (currentLead === userId) {
+      const newLeadId = userListSockets[0].data.userId;
+      setLeadId(roomId, newLeadId);
+    }
+
+    currentUserList[userId].connected = false;
+    
+    await client.set(`${roomId}:userList`, JSON.stringify(currentUserList));
+
+    ioElt.to(roomId).emit('userList:update', currentUserList);
+  }
+}
+
+
+/**
+ * Messages
  */
 export const getMessages = async (roomId: RoomId): Promise<MessageList[]> => {
   const messages = await client.sMembers(`${roomId}:messages`);
@@ -60,6 +106,7 @@ export const getVoteState = async (roomId: RoomId): Promise<VoteState> => {
 }
 
 export const setVoteState = async (roomId: RoomId, state: VoteState): Promise<void> => {
+  client.del(`${roomId}:votes`);
   await client.set(`${roomId}:voteState`, state.toString());
 }
 
@@ -74,4 +121,6 @@ export const getLeadId = async (roomId: RoomId): Promise<UserId | null> => {
 
 export const setLeadId = async (roomId: RoomId, userId: UserId): Promise<void> => {
   await client.set(`${roomId}:lead`, userId);
+
+  ioElt.to(roomId).emit('lead:update', userId);
 }

@@ -1,4 +1,4 @@
-import { addMessage, getLeadId, getVotes, setLeadId, setVote, setVoteState } from "../redis/redis";
+import { addMessage, addUserToList, getLeadId, getUserList, getVotes, setLeadId, setVote, setVoteState } from '../redis/redis';
 import { ioElt as io, ioElt } from '../socketConnection';
 
 import { getUsersInRoom } from "../utils/utils";
@@ -9,7 +9,7 @@ import type { Lead, RoomId, User, UserMessage, UserVote, UserVoteOpenClose } fro
  * JOIN ROOM
 */
 export const joinRoom = async (socket: Socket, userInfo: User): Promise<void> => {
-  const { roomId, userId, username, vote } = userInfo;
+  const { roomId, userId, username } = userInfo;
   
   socket.join(roomId);
 
@@ -19,7 +19,6 @@ export const joinRoom = async (socket: Socket, userInfo: User): Promise<void> =>
   socket.data.roomId = roomId;
   socket.data.username = username;
   socket.data.userId = userId;
-  socket.data.vote = vote;
   socket.data.connected = true;
 
   if (isLead) {
@@ -27,9 +26,7 @@ export const joinRoom = async (socket: Socket, userInfo: User): Promise<void> =>
     setVoteState(roomId, false);
   }
 
-  const userList = await getUsersInRoom(roomId);
-
-  io.to(roomId).emit('userList:update', userList);
+  addUserToList(roomId, userInfo);
 }
 
 /**
@@ -84,6 +81,4 @@ export const sendNewLead = async (data: Lead): Promise<void> => {
   const { roomId, leadId } = data;
 
   setLeadId(roomId, leadId);
-
-  ioElt.to(roomId).emit('lead:update', leadId);
 }
