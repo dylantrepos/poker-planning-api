@@ -5,7 +5,6 @@ import socketOnEvents from './socket/onEvents';
 import { client, getUserList, removeUserFromList } from './redis/redis';
 
 import type { Socket, ServerType } from './types/SocketType';
-import { getUsersInRoom } from './utils/utils';
 
 export let ioElt: ServerType;
 

@@ -1,7 +1,6 @@
 import { addMessage, addUserToList, getLeadId, getUserList, getVotes, setLeadId, setVote, setVoteState } from '../redis/redis';
 import { ioElt as io, ioElt } from '../socketConnection';
 
-import { getUsersInRoom } from "../utils/utils";
 import type { Socket } from "../types/SocketType";
 import type { Lead, RoomId, User, UserMessage, UserVote, UserVoteOpenClose } from '../types/UserType';
 
