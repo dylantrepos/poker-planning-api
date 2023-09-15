@@ -3,7 +3,7 @@ import { Connected, Lead, Role, RoomId, User, UserId, UserList, UserMessage, Use
 
 export interface SocketData {
   roomId: RoomId;
-  username: Username;
+  userName: Username;
   userId: UserId;
   vote: Vote;
   connected: Connected;

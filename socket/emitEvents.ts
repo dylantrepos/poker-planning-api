@@ -8,7 +8,7 @@ import type { Lead, RoomId, User, UserMessage, UserVote, UserVoteOpenClose } fro
  * JOIN ROOM
 */
 export const joinRoom = async (socket: Socket, userInfo: User): Promise<void> => {
-  const { roomId, userId, username } = userInfo;
+  const { roomId, userId, userName } = userInfo;
   
   socket.join(roomId);
 
@@ -16,7 +16,7 @@ export const joinRoom = async (socket: Socket, userInfo: User): Promise<void> =>
   const isLead = leadCurr === userId;
   
   socket.data.roomId = roomId;
-  socket.data.username = username;
+  socket.data.userName = userName;
   socket.data.userId = userId;
   socket.data.connected = true;
 

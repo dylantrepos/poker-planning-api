@@ -63,7 +63,7 @@ export const routerApp = (app: Express) => {
    */
   app.get('/votes/:roomId', async (req: Request, res: Response) => {
     const votes = await getVotes(req.params.roomId);
-
+    
     res.send(votes);
   });
   

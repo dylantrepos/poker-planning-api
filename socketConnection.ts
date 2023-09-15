@@ -2,7 +2,7 @@
 import { Server } from 'socket.io';
 
 import socketOnEvents from './socket/onEvents';
-import { client, getUserList, removeUserFromList } from './redis/redis';
+import { client, getUserList, getVotes, removeUserFromList } from './redis/redis';
 
 import type { Socket, ServerType } from './types/SocketType';
 
@@ -36,6 +36,7 @@ const disconnectFromRoom = async ( socket: Socket ) => {
     client.del(`${roomId}:lead`);
     client.del(`${roomId}:userList`);
     client.del(`${roomId}:votes`);
+    client.del(`${roomId}:voteState`);
 
     return;
   } 

@@ -30,7 +30,7 @@ export const addUserToList = async (roomId: RoomId, user: User): Promise<void> =
   currentUserList[user.userId] = {
     userId: user.userId,
     roomId: user.roomId,
-    username: user.username,
+    userName: user.userName,
     connected: true,
   };
 
@@ -85,7 +85,7 @@ export const addMessage = async (roomId: RoomId, userMessage: UserMessage): Prom
 export const getVotes = async (roomId: RoomId): Promise<Record<UserId, Vote>> => {
   const votes = await client.get(`${roomId}:votes`);
   const votesJson = JSON.parse(votes ?? '{}');
-  
+
   return votesJson;
 }
 
@@ -106,7 +106,7 @@ export const getVoteState = async (roomId: RoomId): Promise<VoteState> => {
 }
 
 export const setVoteState = async (roomId: RoomId, state: VoteState): Promise<void> => {
-  client.del(`${roomId}:votes`);
+  if (!state) client.del(`${roomId}:votes`);
   await client.set(`${roomId}:voteState`, state.toString());
 }
 

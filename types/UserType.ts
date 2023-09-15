@@ -14,7 +14,7 @@ export type Vote =
 export type User = {
     roomId: RoomId;
     userId: UserId;
-    username: Username;
+    userName: Username;
     connected: Connected;
 }
 
@@ -52,7 +52,7 @@ export type UserVoteOpenClose = {
 export type UserMessage = {
   roomId: RoomId;
   userId: UserId;
-  username: Username;
+  userName: Username;
   message: Message;
 }
 
