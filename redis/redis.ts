@@ -1,16 +1,21 @@
 import { createClient } from 'redis';
 import { MessageList, RoomId, UserId, Vote, VoteState, UserMessage, User, UserList } from '../types/UserType';
 import { ioElt } from '../socketConnection';
+import "dotenv/config.js";
 
-export const client = createClient();
+export const client = createClient({
+  password: process.env.REDIS_PASSWORD,
+  socket: {
+      host: process.env.REDISCLOUD_HOST,
+      port: +(process.env.REDIS_PORT || 0)
+  }
+});
 
 client.connect();
 
-client.on('error', err => console.log('Redis Client Error', err));
+client.on('error', err => console.log('Redis err : ', err));
 client.on('connect', async () => {
   await client.flushAll();
-  console.log('Redis DB has been started successfully.');
-  console.log('Redis DB has been reset successfully.');
 });
 
 
@@ -104,6 +109,7 @@ export const setVote = async (roomId: RoomId, userId: UserId, vote: Vote): Promi
  */
 export const getVoteState = async (roomId: RoomId): Promise<VoteState> => {
   const state = await client.get(`${roomId}:voteState`) === 'true';
+
   return state;
 }
 
