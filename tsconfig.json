@@ -6,7 +6,8 @@
     "module": "CommonJS",
     "strict": true,
     "lib": [
-      "esnext"
+      "esnext",
+      "DOM"
     ],
     "esModuleInterop": true
   }
