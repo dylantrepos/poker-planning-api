@@ -4,7 +4,7 @@ import cors from 'cors';
 import { init } from './socketConnection';
 import { routerApp } from "./routes/routes";
 
-const PORT = 3000;
+const PORT = process.env.PORT || 8080;
 const app = express(); 
 const server = http.createServer(app);
 
@@ -14,7 +14,6 @@ init(server);
 
 routerApp(app);
 
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, () => {
   console.clear();
-  console.log(`Example app listening on port ${PORT}!\n\n\n`
-)});
+});
