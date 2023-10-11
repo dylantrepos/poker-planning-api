@@ -34,6 +34,8 @@ export const addUserToList = async (roomId: RoomId, user: User): Promise<void> =
     connected: true,
   };
 
+  
+
   await client.set(`${roomId}:userList`, JSON.stringify(currentUserList));
   ioElt.to(roomId).emit('userList:update', currentUserList);
 }
