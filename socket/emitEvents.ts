@@ -9,6 +9,8 @@ import type { Lead, RoomId, User, UserMessage, UserVote, UserVoteOpenClose } fro
 */
 export const joinRoom = async (socket: Socket, userInfo: User): Promise<void> => {
   const { roomId, userId, userName } = userInfo;
+
+  console.log('socket user : ', userInfo);
   
   socket.join(roomId);
 
