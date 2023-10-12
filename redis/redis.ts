@@ -31,6 +31,9 @@ export const getUserList = async (roomId: RoomId): Promise<UserList> => {
 
 export const addUserToList = async (roomId: RoomId, user: User): Promise<void> => {
   const currentUserList = await getUserList(roomId);
+
+  console.log('roomid : ', roomId);
+  console.log('curr : ', currentUserList);
   
   currentUserList[user.userId] = {
     userId: user.userId,
