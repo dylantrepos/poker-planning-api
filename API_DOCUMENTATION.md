@@ -1,58 +1,106 @@
-/\*\*
+# API Documentation
 
-- @api {get} /users Get all users
-- @apiName GetUsers
-- @apiGroup Users
--
-- @apiSuccess {Object[]} users List of users.
-- @apiSuccess {String} users.name User's name.
-- @apiSuccess {String} users.email User's email.
-  \*/
+## Users
 
-/\*\*
+### Get all users
 
-- @api {post} /users Create a new user
-- @apiName CreateUser
-- @apiGroup Users
--
-- @apiParam {String} name User's name.
-- @apiParam {String} email User's email.
--
-- @apiSuccess {String} message Success message.
-  \*/
+**Endpoint:** `GET /users`
 
-/\*\*
+**Description:** Returns a list of all users.
 
-- @api {get} /users/:id Get a user by ID
-- @apiName GetUser
-- @apiGroup Users
--
-- @apiParam {String} id User's ID.
--
-- @apiSuccess {String} name User's name.
-- @apiSuccess {String} email User's email.
-  \*/
+**Response:**
 
-/\*\*
+- `200 OK` on success
 
-- @api {put} /users/:id Update a user
-- @apiName UpdateUser
-- @apiGroup Users
--
-- @apiParam {String} id User's ID.
-- @apiParam {String} [name] User's name.
-- @apiParam {String} [email] User's email.
--
-- @apiSuccess {String} message Success message.
-  \*/
+```json
+[
+  {
+    "name": "User's name",
+    "email": "User's email"
+  }
+]
+```
 
-/\*\*
+### Create a new user
 
-- @api {delete} /users/:id Delete a user
-- @apiName DeleteUser
-- @apiGroup Users
--
-- @apiParam {String} id User's ID.
--
-- @apiSuccess {String} message Success message.
-  \*/
+**Endpoint:** `POST /users`
+
+**Description:** Creates a new user.
+
+**Parameters:**
+
+- `name`: User's name
+- `email`: User's email (optional)
+
+**Response:**
+
+- `201 Created` on success
+
+```json
+{
+  "message": "Success message"
+}
+```
+
+### Get a user by ID
+
+**Endpoint:** `GET /users/:id`
+
+**Description:** Returns a specific user by ID.
+
+**Parameters:**
+
+- `id`: User's ID
+
+**Response:**
+
+- `200 OK` on success
+
+```json
+{
+  "name": "User's name",
+  "email": "User's email"
+}
+```
+
+### Update a user
+
+**Endpoint:** `PUT /users/:id`
+
+**Description:** Updates a specific user by ID.
+
+**Parameters:**
+
+- `id`: User's ID
+- `name`: User's name (optional)
+- `email`: User's email (optional)
+
+**Response:**
+
+- `200 OK` on success
+
+```json
+{
+  "message": "Success message"
+}
+```
+
+### Delete a user
+
+**Endpoint:** `DELETE /users/:id`
+
+**Description:** Deletes a specific user by ID.
+
+**Parameters:**
+
+- `id`: User's ID
+
+**Response:**
+
+- `200 OK` on success
+
+```json
+{
+  "message": "Success message"
+}
+```
