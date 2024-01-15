@@ -19,11 +19,3 @@ The API provides the following endpoints:
 - `/tasks`: Allows you to create and manage tasks within a project.
 
 For detailed information on how to use each endpoint, refer to the [API documentation](API_DOCUMENTATION.md).
-
-## Contributing
-
-Contributions are welcome! If you'd like to contribute to the Poker Planning API, please follow the guidelines outlined in [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
