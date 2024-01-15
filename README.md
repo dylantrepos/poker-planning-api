@@ -19,3 +19,7 @@ The API provides the following endpoints:
 - `/tasks`: Allows you to create and manage tasks within a project.
 
 For detailed information on how to use each endpoint, refer to the [API documentation](API_DOCUMENTATION.md).
+
+
+## Contributing
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
