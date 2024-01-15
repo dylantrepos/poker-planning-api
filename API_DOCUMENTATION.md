@@ -1,8 +1,6 @@
 # API Documentation
 
-## Users
-
-### Get all users
+## Get all users
 
 **Endpoint:** `GET /users`
 
@@ -21,7 +19,10 @@
 ]
 ```
 
-### Create a new user
+------------
+<br>
+
+## Create a new user
 
 **Endpoint:** `POST /users`
 
@@ -42,7 +43,10 @@
 }
 ```
 
-### Get a user by ID
+------------
+<br>
+
+## Get a user by ID
 
 **Endpoint:** `GET /users/:id`
 
@@ -63,7 +67,10 @@
 }
 ```
 
-### Update a user
+------------
+<br>
+
+## Update a user
 
 **Endpoint:** `PUT /users/:id`
 
@@ -85,7 +92,10 @@
 }
 ```
 
-### Delete a user
+------------
+<br>
+
+## Delete a user
 
 **Endpoint:** `DELETE /users/:id`
 
